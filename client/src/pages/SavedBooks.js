@@ -7,39 +7,23 @@ import {
   Button,
 } from "react-bootstrap";
 
-import { getMe, deleteBook } from "../utils/API";
 import Auth from "../utils/auth";
 import { removeBookId } from "../utils/localStorage";
+import { GET_ME } from "../utils/queries";
+import { REMOVE_BOOK } from "../utils/mutations";
+import { useQuery, useMutation } from "@apollo/client";
 
 const SavedBooks = () => {
-  const [userData, setUserData] = useState({});
+  const { loading, data } = useQuery(GET_ME);
+  const [deleteBook, { error }] = useMutation(REMOVE_BOOK);
 
   // use this to determine if `useEffect()` hook needs to run again
-  const userDataLength = Object.keys(userData).length;
+  const userData = data?.me || [];
+  console.log(userData);
 
-  useEffect(() => {
-    const { loading, data } = useQuery(GET_ME);
-    try {
-      const token = Auth.loggedIn() ? Auth.getToken() : null;
-
-      if (!token) {
-        return false;
-      }
-
-      const { data } = await getMe(token);
-
-      if (!response.ok) {
-        throw new Error("something went wrong!");
-      }
-
-      const user = await response.json();
-      setUserData(user);
-    } catch (err) {
-      console.error(err);
-    }
-
-    getUserData();
-  }, [userDataLength]);
+  if (!userData?.username) {
+    return <h2>You must login to view this page.</h2>;
+  }
 
   // create function that accepts the book's mongo _id value as param and deletes the book from the database
   const handleDeleteBook = async (bookId) => {
@@ -48,16 +32,11 @@ const SavedBooks = () => {
     if (!token) {
       return false;
     }
-    // const [removeBook, { error }] = useMutation(REMOVE_BOOK);
+
     try {
-      const response = await deleteBook(bookId, token);
-
-      if (!response.ok) {
-        throw new Error("something went wrong!");
-      }
-
-      const updatedUser = await response.json();
-      setUserData(updatedUser);
+      await deleteBook({
+        variables: { bookId },
+      });
       // upon success, remove book's id from localStorage
       removeBookId(bookId);
     } catch (err) {
