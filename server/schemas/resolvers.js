@@ -1,5 +1,4 @@
 // import user model
-const { resolvers } = require(".");
 const { User } = require("../models");
 // import sign token function from auth
 const { signToken } = require("../utils/auth");
@@ -7,82 +6,74 @@ const { signToken } = require("../utils/auth");
 const resolvers = {
   // get a single user by either their id or their username
   Query: {
-    getSingleUser: async ({ user = null, params }, res) => {
+    getSingleUser: async (parent, args, context) => {
       const foundUser = await User.findOne({
-        $or: [
-          { _id: user ? user._id : params.id },
-          { username: params.username },
-        ],
+        $or: [{ _id: context.user._id }, { username: context.user.username }],
       });
 
       if (!foundUser) {
-        return res
-          .status(400)
-          .json({ message: "Cannot find a user with this id!" });
+        return false;
       }
 
-      res.json(foundUser);
+      return foundUser;
     },
   },
 
   Mutation: {
     // create a user, sign a token, and send it back (to client/src/components/SignUpForm.js)
-    createUser: async ({ body }, res) => {
-      const user = await User.create(body);
+    addUser: async (parent, args, context) => {
+      const user = await User.create(args);
 
       if (!user) {
-        return res.status(400).json({ message: "Something is wrong!" });
+        return false;
       }
       const token = signToken(user);
-      res.json({ token, user });
+      return { token, user };
     },
     // login a user, sign a token, and send it back (to client/src/components/LoginForm.js)
     // {body} is destructured req.body
-    login: async ({ body }, res) => {
+    login: async (parent, args, context) => {
       const user = await User.findOne({
-        $or: [{ username: body.username }, { email: body.email }],
+        $or: [{ username: args.username }, { email: args.email }],
       });
       if (!user) {
-        return res.status(400).json({ message: "Can't find this user" });
+        return { message: "Can't find this user" };
       }
 
-      const correctPw = await user.isCorrectPassword(body.password);
+      const correctPw = await user.isCorrectPassword(args.password);
 
       if (!correctPw) {
-        return res.status(400).json({ message: "Wrong password!" });
+        return { message: "Wrong password!" };
       }
       const token = signToken(user);
-      res.json({ token, user });
+      return { token, user };
     },
     // save a book to a user's `savedBooks` field by adding it to the set (to prevent duplicates)
     // user comes from `req.user` created in the auth middleware function
-    saveBook: async ({ user, body }, res) => {
-      console.log(user);
+    saveBook: async (parent, args, context) => {
       try {
         const updatedUser = await User.findOneAndUpdate(
-          { _id: user._id },
-          { $addToSet: { savedBooks: body } },
+          { _id: context.user._id },
+          { $addToSet: { savedBooks: args } },
           { new: true, runValidators: true }
         );
-        return res.json(updatedUser);
+        return updatedUser;
       } catch (err) {
         console.log(err);
-        return res.status(400).json(err);
+        return false;
       }
     },
     // remove a book from `savedBooks`
-    deleteBook: async ({ user, params }, res) => {
+    removeBook: async (parent, args, context) => {
       const updatedUser = await User.findOneAndUpdate(
-        { _id: user._id },
-        { $pull: { savedBooks: { bookId: params.bookId } } },
+        { _id: context.user._id },
+        { $pull: { savedBooks: { bookId: args.bookId } } },
         { new: true }
       );
       if (!updatedUser) {
-        return res
-          .status(404)
-          .json({ message: "Couldn't find user with this id!" });
+        return { message: "Couldn't find user with this id!" };
       }
-      return res.json(updatedUser);
+      return updatedUser;
     },
   },
 };
