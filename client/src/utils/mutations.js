@@ -5,8 +5,8 @@ export const LOGIN_USER = gql`
     loginUser(email: $email, password: $password) {
       token
       user {
-        _id
         username
+        email
       }
     }
   }
@@ -17,8 +17,8 @@ export const ADD_USER = gql`
     addUser(username: $username, email: $email, password: $password) {
       token
       user {
-        _id
         username
+        email
       }
     }
   }

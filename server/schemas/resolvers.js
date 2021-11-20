@@ -1,3 +1,4 @@
+const { AuthenticationError } = require("apollo-server-express");
 // import user model
 const { User } = require("../models");
 // import sign token function from auth
@@ -6,16 +7,16 @@ const { signToken } = require("../utils/auth");
 const resolvers = {
   // get a single user by either their id or their username
   Query: {
-    getSingleUser: async (parent, args, context) => {
-      const foundUser = await User.findOne({
-        $or: [{ _id: context.user._id }, { username: context.user.username }],
-      });
+    me: async (parent, args, context) => {
+      if (context.user) {
+        const userData = await User.findOne({ _id: context.user._id }).select(
+          "-__v -password"
+        );
 
-      if (!foundUser) {
-        return false;
+        return userData;
       }
 
-      return foundUser;
+      throw new AuthenticationError("Not logged in");
     },
   },
 
