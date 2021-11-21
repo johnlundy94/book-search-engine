@@ -33,7 +33,7 @@ const resolvers = {
     },
     // login a user, sign a token, and send it back (to client/src/components/LoginForm.js)
     // {body} is destructured req.body
-    login: async (parent, args, context) => {
+    loginUser: async (parent, args, context) => {
       const user = await User.findOne({
         $or: [{ username: args.username }, { email: args.email }],
       });
