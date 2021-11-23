@@ -1,7 +1,7 @@
 const { gql } = require("apollo-server-express");
 const typeDefs = gql`
   type Query {
-    me: User
+    getSingleUser: User
   }
 
   type Mutation {
@@ -30,10 +30,10 @@ const typeDefs = gql`
   }
 
   input bookInput {
-    bookId: String!
+    bookId: String
     authors: [String]
-    description: String!
-    title: String!
+    description: String
+    title: String
     image: String
     link: String
   }

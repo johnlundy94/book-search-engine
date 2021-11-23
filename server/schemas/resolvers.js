@@ -7,15 +7,10 @@ const { signToken } = require("../utils/auth");
 const resolvers = {
   // get a single user by either their id or their username
   Query: {
-    me: async (parent, args, context) => {
+    getSingleUser: async (parent, args, context) => {
       if (context.user) {
-        const userData = await User.findOne({ _id: context.user._id }).select(
-          "-__v -password"
-        );
-
-        return userData;
+        return User.findOne({ _id: context.user._id }).populate("savedBooks");
       }
-
       throw new AuthenticationError("Not logged in");
     },
   },
@@ -51,18 +46,17 @@ const resolvers = {
     },
     // save a book to a user's `savedBooks` field by adding it to the set (to prevent duplicates)
     // user comes from `req.user` created in the auth middleware function
-    saveBook: async (parent, args, context) => {
-      try {
+    saveBook: async (parent, { input }, context) => {
+      if (context.user) {
+        console.log("line 51", input);
         const updatedUser = await User.findOneAndUpdate(
           { _id: context.user._id },
-          { $addToSet: { savedBooks: args } },
+          { $addToSet: { savedBooks: input } },
           { new: true, runValidators: true }
         );
         return updatedUser;
-      } catch (err) {
-        console.log(err);
-        return false;
       }
+      return false;
     },
     // remove a book from `savedBooks`
     removeBook: async (parent, args, context) => {

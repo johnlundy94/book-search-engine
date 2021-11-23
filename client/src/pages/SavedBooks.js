@@ -9,16 +9,16 @@ import {
 
 import Auth from "../utils/auth";
 import { removeBookId } from "../utils/localStorage";
-import { GET_ME } from "../utils/queries";
+import { GET_USER } from "../utils/queries";
 import { REMOVE_BOOK } from "../utils/mutations";
 import { useQuery, useMutation } from "@apollo/client";
 
 const SavedBooks = () => {
-  const { loading, data } = useQuery(GET_ME);
+  const { loading, data } = useQuery(GET_USER);
   const [removeBook] = useMutation(REMOVE_BOOK);
 
   // use this to determine if `useEffect()` hook needs to run again
-  const userData = data?.me || [];
+  const userData = data?.getSingleUser || [];
   console.log(userData);
 
   if (!userData?.username) {
