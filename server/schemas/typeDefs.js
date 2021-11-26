@@ -8,7 +8,7 @@ const typeDefs = gql`
     loginUser(email: String!, password: String!): Auth
     addUser(username: String!, email: String!, password: String!): Auth
     saveBook(input: bookInput): User
-    removeBook(bookId: ID!): User
+    removeBook(bookId: String!): User
   }
 
   type User {
